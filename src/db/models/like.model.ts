@@ -26,4 +26,11 @@ const likeSchema = new Schema<ILike, LikeModel>(
   { timestamps: true },
 );
 
+likeSchema.pre("validate", function (next) {
+  const likedItemCount = [this.video, this.comment, this.tweet].filter(Boolean).length;
+  if (likedItemCount !== 1) {
+    return next(new Error("A like must be associated with exactly one item (video, comment, or tweet)."));
+  }
+  next();
+});
 export const Like = mongoose.model<ILike, LikeModel>("Like", likeSchema);

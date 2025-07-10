@@ -1,5 +1,5 @@
-// import type { JwtPayload } from "jsonwebtoken";
 import type { Document, Model } from "mongoose";
+import type mongoose from "mongoose";
 
 export type IUser = {
   username: string;
@@ -7,12 +7,10 @@ export type IUser = {
   fullName: string;
   avatar: string;
   coverImage?: string;
-  watchHistory: string[];
+  watchHistory: mongoose.Types.ObjectId[];
   password: string;
   refreshToken?: string;
   isPasswordCorrect: (password: string) => Promise<boolean>;
-  generateAccessToken: () => string;
-  generateRefreshToken: () => string;
 } & Document;
 
 export type UserModel = Model<IUser>;

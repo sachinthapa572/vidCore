@@ -1,8 +1,9 @@
-import type { Document, Model, Schema } from "mongoose";
+import type { Document, Model } from "mongoose";
+import type mongoose from "mongoose";
 
 export type ITweet = {
   content: string;
-  owner: Schema.Types.ObjectId;
+  owner: mongoose.Types.ObjectId;
 } & Document;
 
 export type TweetModel = Model<ITweet>;

@@ -1,4 +1,5 @@
-import type { Document, Model, Schema } from "mongoose";
+import type { Document, Model } from "mongoose";
+import type mongoose from "mongoose";
 
 export type IVideo = {
   videoFile: string;
@@ -8,7 +9,7 @@ export type IVideo = {
   duration: number;
   views: number;
   isPublished: boolean;
-  owner: Schema.Types.ObjectId;
+  owner: mongoose.Types.ObjectId;
 } & Document;
 
 export type VideoModel = Model<IVideo>;

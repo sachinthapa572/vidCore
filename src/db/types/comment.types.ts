@@ -1,9 +1,10 @@
-import type { Document, Model, Schema } from "mongoose";
+import type mongoose from "mongoose";
+import type { Document } from "mongoose";
 
 export type IComment = {
   content: string;
-  video: Schema.Types.ObjectId;
-  owner: Schema.Types.ObjectId;
+  video: mongoose.Types.ObjectId;
+  owner: mongoose.Types.ObjectId;
 } & Document;
 
-export type CommentModel = Model<IComment>;
+export type CommentModel = mongoose.Model<IComment>;

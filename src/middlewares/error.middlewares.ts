@@ -1,5 +1,6 @@
 import type { ErrorHandler, NotFoundHandler } from "hono";
 import type { ContentfulStatusCode, StatusCode } from "hono/utils/http-status";
+import type mongoose from "mongoose";
 
 import type { envBinding } from "@/db/env";
 
@@ -24,16 +25,16 @@ const errorHandler: ErrorHandler<{ Bindings: envBinding }> = (err, c) => {
   }
   else if ("name" in err && err.name === "ValidationError") {
     statusCode = BAD_REQUEST;
-    const errors = Object.values((err as any).errors).map(
-      (el: any) => el.message,
+    const errors = Object.values((err as mongoose.Error.ValidationError).errors).map(
+      el => el.message,
     );
     message = `Invalid input data. ${errors.join(". ")}`;
   }
-  else if ("code" in err && err.code === 11000) {
+  else if ("code" in err && err.code === 11000 && "keyValue" in err) {
     statusCode = CONFLICT;
-    const match = (err as any).errmsg.match(/dup key: \{.*: "?(.*?)"? \}/);
-    const value = match ? match[1] : "unknown";
-    message = `Duplicate field value: ${value}. Please use another value!`;
+    const field = Object.keys((err as any).keyValue)[0];
+    const value = Object.values((err as any).keyValue)[0];
+    message = `Duplicate field error: A document with ${field} '${value}' already exists.`;
   }
   else if ("status" in err) {
     statusCode = err.status as StatusCode;
