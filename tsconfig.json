@@ -20,7 +20,7 @@
 
     // === Type Roots & Types ===
     "typeRoots": ["./node_modules/@types"],
-    "types": ["bun"], // Bun environment types
+    "types": ["bun", "node"], // Bun environment types
 
     // === Strictness & Type Safety ===
     "strict": true, // Enable all strict type checks
