@@ -1,20 +1,56 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    // === ECMAScript Target ===
+    "target": "ESNext", // Use the latest JS features
+
+    // === JSX for Hono ===
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "baseUrl": "./",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+
+    // === Base URL & Path Aliases ===
+    "baseUrl": ".", // Root directory for imports
+
+    // === Module Resolution ===
+    "module": "ESNext", // Use ESNext modules
+    "moduleResolution": "bundler", // Bun-style module resolution
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["src/*"] // Alias '@/' to 'src/'
     },
+    "resolveJsonModule": true, // Allow importing JSON files
+
+    // === Type Roots & Types ===
     "typeRoots": ["./node_modules/@types"],
-    "types": ["node"],
-    "strict": true,
-    "outDir": "./dist",
-    "skipLibCheck": true
+    "types": ["bun"], // Bun environment types
+
+    // === Strictness & Type Safety ===
+    "strict": true, // Enable all strict type checks
+    "noImplicitAny": true, // Disallow implicit 'any'
+    "noUnusedLocals": true, // Warn on unused locals
+    "noUnusedParameters": true, // Warn on unused parameters
+
+    // === Declarations ===
+    "declaration": true, // Emit .d.ts files
+    "declarationMap": true, // Emit source maps for .d.ts
+
+    // === Output & Build ===
+    "outDir": "dist", // Output directory
+    "removeComments": true, // Remove comments in output
+
+    // === Emit ===
+    "sourceMap": true, // Enable source maps
+
+    // === Interop & Compatibility ===
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true // Skip type checking node_modules
   },
+
+  // === Project Structure ===
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+
+  // === tsc-alias Plugin ===
   "tsc-alias": {
     "resolveFullPaths": true
   }
