@@ -21,7 +21,7 @@ const errorHandler: ErrorHandler<{ Bindings: envBinding }> = (err, c) => {
     {
       success: false,
       message: err?.message || "Internal Server Error",
-      stack: env ? null : err?.stack,
+      stack: env === "production" ? undefined : err?.stack,
     },
     statusCode as ContentfulStatusCode,
   );

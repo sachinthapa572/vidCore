@@ -5,8 +5,8 @@
   "license": "Apache",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "lint": "eslint . ",
-    "lint:fix": "bun run lint --fix",
+    "lint": "bunx eslint . ",
+    "lint:fix": "bunx eslint --fix",
     "check": "bunx tsc --noEmit"
   },
   "dependencies": {
