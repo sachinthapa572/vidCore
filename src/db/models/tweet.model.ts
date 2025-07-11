@@ -15,7 +15,7 @@ const tweetSchema = new Schema<ITweet, TweetModel>(
       required: [true, "Owner is required"],
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export const Tweet = mongoose.model<ITweet, TweetModel>("Tweet", tweetSchema);

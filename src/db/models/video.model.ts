@@ -38,11 +38,10 @@ const videoSchema = new Schema<IVideo, VideoModel>(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 videoSchema.plugin(mongooseAggregatePaginate);

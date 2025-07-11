@@ -1,5 +1,5 @@
-import type { Document, Model } from "mongoose";
 import type mongoose from "mongoose";
+import type { Document, Model } from "mongoose";
 
 export type IUser = {
   username: string;

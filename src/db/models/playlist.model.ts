@@ -26,7 +26,7 @@ const playlistSchema = new Schema<IPlaylist, PlaylistModel>(
       required: [true, "Owner is required"],
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export const Playlist = mongoose.model<IPlaylist, PlaylistModel>("Playlist", playlistSchema);

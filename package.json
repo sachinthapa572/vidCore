@@ -3,22 +3,29 @@
   "type": "module",
   "version": "1.0.0",
   "license": "Apache",
+  "author": "Sachin Thapa <thapasachin572@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sachinthasachintha/vidCore.git"
+  },
+  "main": "src/server.ts",
   "scripts": {
-    "dev": "bun run --hot src/index.ts",
-    "lint": "bunx eslint . ",
-    "lint:fix": "bunx eslint --fix",
-    "check": "bunx tsc --noEmit"
+    "dev": "bun run --hot src/server.ts",
+    "format": "biome format --write .",
+    "lint": "biome lint",
+    "check": "biome check .",
+    "check:fix": "biome check  --fix .",
+    "build": "bunx tsc --noEmit"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.7.0",
     "hono": "^4.8.4",
     "mongoose": "^8.16.2",
     "mongoose-aggregate-paginate-v2": "^1.1.4",
     "zod": "^4.0.2"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.16.2",
-    "@types/bun": "^1.2.18",
-    "eslint": "^9.30.1",
-    "eslint-plugin-format": "^1.0.1"
+    "@biomejs/biome": "2.1.1",
+    "@types/bun": "^1.2.18"
   }
 }

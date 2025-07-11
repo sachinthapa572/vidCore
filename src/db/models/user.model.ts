@@ -52,26 +52,23 @@ const userSchema = new Schema<IUser, UserModel>(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password"))
-    return next();
+  if (!this.isModified("password")) return next();
   try {
     this.password = await Bun.password.hash(this.password, {
       algorithm: "argon2d",
     });
     next();
-  }
-  catch (error) {
+  } catch (error) {
     next(error as Error);
   }
 });
 
 userSchema.methods.isPasswordCorrect = async function (password: string) {
-  if (!this.password)
-    return false;
+  if (!this.password) return false;
   return await Bun.password.verify(password, this.password);
 };
 

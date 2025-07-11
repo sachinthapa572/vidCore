@@ -21,15 +21,16 @@ const likeSchema = new Schema<ILike, LikeModel>(
       ref: "User",
       required: [true, "Liked by is required"],
     },
-
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 likeSchema.pre("validate", function (next) {
   const likedItemCount = [this.video, this.comment, this.tweet].filter(Boolean).length;
   if (likedItemCount !== 1) {
-    return next(new Error("A like must be associated with exactly one item (video, comment, or tweet)."));
+    return next(
+      new Error("A like must be associated with exactly one item (video, comment, or tweet).")
+    );
   }
   next();
 });

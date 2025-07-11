@@ -23,7 +23,7 @@ const commentSchema = new Schema<IComment, CommentModel>(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 commentSchema.plugin(mongooseAggregatePaginate);

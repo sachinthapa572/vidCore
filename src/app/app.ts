@@ -1,6 +1,8 @@
+import { errorHandler, notFoundHandler } from "@/middlewares/error.middlewares";
+import { authRouter } from "@/routes";
+
 import dbConnect from "../db/database.config";
 import appEnv from "../db/env";
-import { errorHandler, notFound } from "../middlewares";
 import { createApp } from "./create-app";
 
 const app = createApp();
@@ -10,11 +12,13 @@ if (typeof process !== "undefined") {
   dbConnect();
 }
 
-app.get("/", (c) => {
+app.get("/", c => {
   return c.json({ message: "Hello Hono!" }, 200);
 });
 
+app.basePath("/users").route("/", authRouter);
+
 app.onError(errorHandler);
-app.notFound(notFound);
+app.notFound(notFoundHandler);
 
 export { app, appEnv };

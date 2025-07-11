@@ -15,7 +15,7 @@ const subscriptionSchema = new Schema<ISubscription, SubscriptionModel>(
       required: [true, "Channel is required"],
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 // Prevent duplicate subscriptions
@@ -25,9 +25,11 @@ subscriptionSchema.index({ subscriber: 1, channel: 1 }, { unique: true });
 subscriptionSchema.pre("save", function (next) {
   if (this.subscriber.equals(this.channel)) {
     next(new Error("Users cannot subscribe to themselves"));
-  }
-  else {
+  } else {
     next();
   }
 });
-export const Subscription = mongoose.model<ISubscription, SubscriptionModel>("Subscription", subscriptionSchema);
+export const Subscription = mongoose.model<ISubscription, SubscriptionModel>(
+  "Subscription",
+  subscriptionSchema
+);

@@ -5,7 +5,6 @@ import { poweredBy } from "hono/powered-by";
 import { prettyJSON } from "hono/pretty-json";
 
 import type { envBinding } from "../db/env";
-
 import serveEmojiFavicon from "../utils/serve-emoji-favicon";
 
 export function createApp() {
@@ -32,7 +31,7 @@ export function createApp() {
       allowMethods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
       maxAge: 86400,
-    }),
+    })
   );
 
   return app;
