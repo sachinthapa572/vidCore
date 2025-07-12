@@ -1,8 +1,26 @@
-import mongoose, { Schema } from "mongoose";
+import { type Model, model, Schema } from "mongoose";
 
-import type { IUser, UserModel } from "../types/user.types";
+import type { ObjectId, WithDoc } from "@/types/type";
 
-const userSchema = new Schema<IUser, UserModel>(
+export type Methods = {
+  isPasswordCorrect(pwd: string): Promise<boolean>;
+};
+
+export type IUser = WithDoc<{
+  username: string;
+  email: string;
+  fullName: string;
+  avatar: string;
+  coverImage?: string;
+  watchHistory: ObjectId[];
+  password: string;
+  refreshToken?: string;
+}> &
+  Methods;
+
+export type UserModel = Model<IUser>;
+
+const userSchema = new Schema<IUser, UserModel, Methods>(
   {
     username: {
       type: String,
@@ -20,7 +38,8 @@ const userSchema = new Schema<IUser, UserModel>(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^[\w.%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i, "Please fill a valid email address"],
+      index: true,
+      match: [/^[\w.%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/, "Please fill a valid email address"],
     },
     fullName: {
       type: String,
@@ -29,11 +48,11 @@ const userSchema = new Schema<IUser, UserModel>(
       index: true,
     },
     avatar: {
-      type: String, // cloudinary url
+      type: String,
       required: true,
     },
     coverImage: {
-      type: String, // cloudinary url
+      type: String,
     },
     watchHistory: [
       {
@@ -52,9 +71,17 @@ const userSchema = new Schema<IUser, UserModel>(
   },
   {
     timestamps: true,
+    toJSON: {
+      transform: (_doc, ret) => {
+        // delete ret.password;
+        // delete ret.refreshToken;
+        return ret;
+      },
+    },
   }
 );
 
+// ✅ Password hash hook
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   try {
@@ -62,14 +89,15 @@ userSchema.pre("save", async function (next) {
       algorithm: "argon2d",
     });
     next();
-  } catch (error) {
-    next(error as Error);
+  } catch (err) {
+    next(err as Error);
   }
 });
 
-userSchema.methods.isPasswordCorrect = async function (password: string) {
-  if (!this.password) return false;
-  return await Bun.password.verify(password, this.password);
+// ✅ Instance method
+userSchema.methods.isPasswordCorrect = async function (this: IUser, pwd: string) {
+  return await Bun.password.verify(pwd, this.password);
 };
 
-export const User = mongoose.model<IUser, UserModel>("User", userSchema);
+// ✅ Export the model
+export const User = model<IUser>("User", userSchema);

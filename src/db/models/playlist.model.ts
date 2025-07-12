@@ -1,6 +1,16 @@
-import mongoose, { Schema } from "mongoose";
+import type mongoose from "mongoose";
+import { model, Schema } from "mongoose";
 
-import type { IPlaylist, PlaylistModel } from "../types/playlist.types";
+import type { ObjectId, WithDoc } from "@/types/type";
+
+export type IPlaylist = WithDoc<{
+  name: string;
+  description: string;
+  videos: ObjectId[];
+  owner: ObjectId;
+}>;
+
+export type PlaylistModel = mongoose.Model<IPlaylist>;
 
 const playlistSchema = new Schema<IPlaylist, PlaylistModel>(
   {
@@ -29,4 +39,4 @@ const playlistSchema = new Schema<IPlaylist, PlaylistModel>(
   { timestamps: true }
 );
 
-export const Playlist = mongoose.model<IPlaylist, PlaylistModel>("Playlist", playlistSchema);
+export const Playlist = model<IPlaylist, PlaylistModel>("Playlist", playlistSchema);

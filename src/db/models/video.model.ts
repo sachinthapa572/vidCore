@@ -1,7 +1,21 @@
+import type { Model } from "mongoose";
 import mongoose, { Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-import type { IVideo, VideoModel } from "../types/video.types";
+import type { ObjectId, WithDoc } from "@/types/type";
+
+export type IVideo = WithDoc<{
+  videoFile: string;
+  thumbnail: string;
+  title: string;
+  description: string;
+  duration: number;
+  views: number;
+  isPublished: boolean;
+  owner: ObjectId;
+}>;
+
+export type VideoModel = Model<IVideo>;
 
 const videoSchema = new Schema<IVideo, VideoModel>(
   {

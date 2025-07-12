@@ -1,6 +1,14 @@
+import type { Model } from "mongoose";
 import mongoose, { Schema } from "mongoose";
 
-import type { ITweet, TweetModel } from "../types/tweet.types";
+import type { ObjectId, WithDoc } from "@/types/type";
+
+export type ITweet = WithDoc<{
+  content: string;
+  owner: ObjectId;
+}>;
+
+export type TweetModel = Model<ITweet>;
 
 const tweetSchema = new Schema<ITweet, TweetModel>(
   {

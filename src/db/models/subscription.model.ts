@@ -1,6 +1,14 @@
+import type { Model } from "mongoose";
 import mongoose, { Schema } from "mongoose";
 
-import type { ISubscription, SubscriptionModel } from "../types/subscription.types";
+import type { ObjectId, WithDoc } from "@/types/type";
+
+export type ISubscription = WithDoc<{
+  subscriber: ObjectId;
+  channel: ObjectId;
+}>;
+
+export type SubscriptionModel = Model<ISubscription>;
 
 const subscriptionSchema = new Schema<ISubscription, SubscriptionModel>(
   {

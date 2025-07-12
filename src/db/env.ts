@@ -4,15 +4,17 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production"]).default("development"),
   PORT: z.coerce.number().default(9999),
   DATABASE_URL: z.string(),
+  IMAGEKIT_PUBLIC_KEY: z.string({ error: "Invalid ImageKit public key" }),
+  IMAGEKIT_PRIVATE_KEY: z.string({ error: "Invalid ImageKit private key" }),
+  IMAGEKIT_URL_ENDPOINT: z.url({ error: "Invalid ImageKit URL endpoint" }),
+  JWT_SECRET: z.string({ error: "Invalid JWT secret" }),
 });
 
 const parseData = EnvSchema.safeParse(Bun.env);
 
 if (parseData.error) {
-  // biome-ignore lint/suspicious/noConsole: for debugging purposes
   console.error("❌ Invalid env:");
   const flattened = z.flattenError(parseData.error);
-  // biome-ignore lint/suspicious/noConsole: for debugging purposes
   console.error(JSON.stringify(flattened.fieldErrors, null, 2));
   process.exit(1);
 }

@@ -1,9 +1,22 @@
-import mongoose, { Schema } from "mongoose";
+import { type Model, model, Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
-import type { CommentModel, IComment } from "../types/comment.types";
+import type { ObjectId, WithDoc } from "@/types/type";
 
-const commentSchema = new Schema<IComment, CommentModel>(
+type Methods = {
+  isOwnedBy(userId: ObjectId): boolean;
+};
+
+export type IComment = WithDoc<{
+  content: string;
+  video: ObjectId;
+  owner: ObjectId;
+}> &
+  Methods;
+
+export type commmentModel = Model<IComment>;
+
+const commentSchema = new Schema<IComment, commmentModel, Methods>(
   {
     content: {
       type: String,
@@ -26,6 +39,10 @@ const commentSchema = new Schema<IComment, CommentModel>(
   }
 );
 
+commentSchema.methods.isOwnedBy = function (userId: ObjectId): boolean {
+  return this.owner.equals(userId);
+};
+
 commentSchema.plugin(mongooseAggregatePaginate);
 
-export const Comment = mongoose.model<IComment, CommentModel>("Comment", commentSchema);
+export const Comment = model<IComment>("Comment", commentSchema);

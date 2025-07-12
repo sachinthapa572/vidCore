@@ -1,6 +1,16 @@
-import mongoose, { Schema } from "mongoose";
+import type { Model } from "mongoose";
+import { model, Schema } from "mongoose";
 
-import type { ILike, LikeModel } from "../types/like.types";
+import type { ObjectId, WithDoc } from "@/types/type";
+
+export type ILike = WithDoc<{
+  video?: ObjectId;
+  comment?: ObjectId;
+  tweet?: ObjectId;
+  likedBy: ObjectId;
+}>;
+
+export type LikeModel = Model<ILike>;
 
 const likeSchema = new Schema<ILike, LikeModel>(
   {
@@ -34,4 +44,4 @@ likeSchema.pre("validate", function (next) {
   }
   next();
 });
-export const Like = mongoose.model<ILike, LikeModel>("Like", likeSchema);
+export const Like = model<ILike>("Like", likeSchema);
