@@ -22,25 +22,30 @@ export const AuthService = {
       throwError(HttpStatusCode.CONFLICT, "User already exists", "USER_EXISTS");
     }
 
-    const [avatarBuffer, coverBuffer] = await Promise.all([
-      data.avatar.arrayBuffer(),
-      data.coverImage.arrayBuffer(),
-    ]);
+    let avatarUpload = { url: "" };
+    let coverUpload = { url: "" };
 
-    const [avatarBase64, coverBase64] = [encodeBase64(avatarBuffer), encodeBase64(coverBuffer)];
+    if (data.avatar && data.coverImage) {
+      const [avatarBuffer, coverBuffer] = await Promise.all([
+        data.avatar.arrayBuffer(),
+        data.coverImage.arrayBuffer(),
+      ]);
 
-    const [avatarUpload, coverUpload] = await Promise.all([
-      imageKitService.upload({
-        file: avatarBase64,
-        fileName: data.avatar.name,
-        folder: "/avatars",
-      }),
-      imageKitService.upload({
-        file: coverBase64,
-        fileName: data.coverImage.name,
-        folder: "/coverImages",
-      }),
-    ]);
+      const [avatarBase64, coverBase64] = [encodeBase64(avatarBuffer), encodeBase64(coverBuffer)];
+
+      [avatarUpload, coverUpload] = await Promise.all([
+        imageKitService.upload({
+          file: avatarBase64,
+          fileName: data.avatar.name,
+          folder: "/avatars",
+        }),
+        imageKitService.upload({
+          file: coverBase64,
+          fileName: data.coverImage.name,
+          folder: "/coverImages",
+        }),
+      ]);
+    }
 
     // Create the user
     const created = await User.create({
@@ -48,8 +53,8 @@ export const AuthService = {
       email: data.email,
       username: data.username,
       password: data.password,
-      avatar: avatarUpload.url,
-      coverImage: coverUpload.url,
+      avatar: avatarUpload.url || undefined,
+      coverImage: coverUpload.url || undefined,
     });
 
     return created;

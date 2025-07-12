@@ -9,7 +9,7 @@ export type IUser = {
   username: string;
   email: string;
   fullName: string;
-  avatar: string;
+  avatar?: string;
   coverImage?: string;
   watchHistory: Types.ObjectId[];
   password: string;
@@ -45,7 +45,7 @@ export const userSchema = new Schema<IUser, Model<IUser>, Methods>(
     },
     avatar: {
       type: String,
-      required: true,
+      //   required: true,
     },
     coverImage: {
       type: String,

@@ -1,0 +1,35 @@
+name: Run Bun Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: bun install
+      - name: Run Biome lint & format check
+        run: bun x biome check .
+      - name: Start server
+        run: bun run start &
+      - name: Wait for server
+        run: |
+          for i in {1..30}; do
+            if nc -z localhost 8080; then
+              echo "Server is up!"
+              break
+            fi
+            echo "Waiting for server..."
+            sleep 1
+          done
+      - name: Run tests
+        run: bun test

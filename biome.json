@@ -16,7 +16,8 @@
       ".next",
       ".nuxt",
       ".vercel",
-      "*.d.ts"
+      "*.d.ts",
+      "*.test.ts"
     ]
   },
   "formatter": {

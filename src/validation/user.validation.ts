@@ -20,11 +20,13 @@ export const userValidationSchema = z.object({
   avatar: z
     .file({ error: "Invalid avatar file" })
     .max(5 * 1024 * 1024, "Avatar file must be less than 5MB")
-    .mime(Object.values(ValidFileTypes)),
+    .mime(Object.values(ValidFileTypes))
+    .optional(),
   coverImage: z
     .file({ error: "Invalid cover image file" })
     .max(10 * 1024 * 1024, "Cover image file must be less than 10MB")
-    .mime(Object.values(ValidFileTypes)),
+    .mime(Object.values(ValidFileTypes))
+    .optional(),
 });
 
 export const userLoginSchema = z.object({

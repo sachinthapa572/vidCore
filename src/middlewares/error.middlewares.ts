@@ -68,7 +68,7 @@ const parseCustomErrorInfo = (err: HTTPException): CustomErrorInfo => {
 // Error Handler
 const errorHandler: ErrorHandler<{ Bindings: envBinding }> = (err, c) => {
   console.error("❌ Error occurred:", {
-    // error: err,
+    error: err,
     stack: err?.stack,
     url: c.req.url,
     method: c.req.method,
@@ -110,19 +110,25 @@ const errorHandler: ErrorHandler<{ Bindings: envBinding }> = (err, c) => {
         response.code = errorInfo.code || getDefaultErrorCode(statusCode);
       }
     } else if (isMongoCastError(err)) {
+      console.log("MongoCastError detected:", err);
       response.message = `Invalid ${err.kind} for field '${err.path}'`;
       response.code = "INVALID_ID";
     } else if (isMongoValidationError(err)) {
+      console.log("MongoValidationError detected:", err);
       response.message = "Validation failed";
       response.code = "MONGO_VALIDATION_ERROR";
     } else if (isMongoDuplicateKeyError(err)) {
+      console.log("MongoDuplicateKeyError detected:", err);
       const [field, value] = Object.entries(err.keyValue)[0] || ["unknown", "unknown"];
       response.message = `Duplicate field error: A document with ${field} '${value}' already exists`;
       response.code = "DUPLICATE_KEY";
     } else if (isHttpError(err)) {
+      console.log("HttpError detected:", err);
       response.message = err.message;
       response.code = getDefaultErrorCode(err.status as StatusCode);
     }
+
+    console.log("random error", err);
 
     // Add stack trace in development
     if (env === "development" && err?.stack) {

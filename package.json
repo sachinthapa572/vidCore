@@ -18,10 +18,12 @@
     "build": "bunx tsgo --noEmit"
   },
   "dependencies": {
+    "@faker-js/faker": "^9.9.0",
     "@hono/zod-validator": "^0.7.0",
     "@typescript/native-preview": "^7.0.0-dev.20250712.1",
     "hono": "^4.8.4",
     "imagekit": "^6.0.0",
+    "mongodb-memory-server": "^10.1.4",
     "mongoose": "^8.16.2",
     "mongoose-aggregate-paginate-v2": "^1.1.4",
     "zod": "^4.0.2"
