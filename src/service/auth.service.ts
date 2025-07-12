@@ -1,4 +1,3 @@
-// auth.service.ts - Fixed version
 import { sign } from "hono/jwt";
 import { encodeBase64 } from "hono/utils/encode";
 import type { HydratedDocument } from "mongoose";
