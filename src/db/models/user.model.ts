@@ -45,7 +45,6 @@ export const userSchema = new Schema<IUser, Model<IUser>, Methods>(
     },
     avatar: {
       type: String,
-      //   required: true,
     },
     coverImage: {
       type: String,

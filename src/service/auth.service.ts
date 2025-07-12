@@ -25,26 +25,49 @@ export const AuthService = {
     let avatarUpload = { url: "" };
     let coverUpload = { url: "" };
 
-    if (data.avatar && data.coverImage) {
-      const [avatarBuffer, coverBuffer] = await Promise.all([
-        data.avatar.arrayBuffer(),
-        data.coverImage.arrayBuffer(),
-      ]);
+    const uploadPromises = [];
 
-      const [avatarBase64, coverBase64] = [encodeBase64(avatarBuffer), encodeBase64(coverBuffer)];
+    if (data.avatar) {
+      const avatarFile = data.avatar;
+      uploadPromises.push(
+        avatarFile
+          .arrayBuffer()
+          .then(buffer =>
+            imageKitService.upload({
+              file: encodeBase64(buffer),
+              fileName: avatarFile.name,
+              folder: "/avatars",
+            })
+          )
+          .then(result => ({ type: "avatar", result }))
+      );
+    }
 
-      [avatarUpload, coverUpload] = await Promise.all([
-        imageKitService.upload({
-          file: avatarBase64,
-          fileName: data.avatar.name,
-          folder: "/avatars",
-        }),
-        imageKitService.upload({
-          file: coverBase64,
-          fileName: data.coverImage.name,
-          folder: "/coverImages",
-        }),
-      ]);
+    if (data.coverImage) {
+      const coverImageFile = data.coverImage;
+      uploadPromises.push(
+        coverImageFile
+          .arrayBuffer()
+          .then(buffer =>
+            imageKitService.upload({
+              file: encodeBase64(buffer),
+              fileName: coverImageFile.name,
+              folder: "/coverImages",
+            })
+          )
+          .then(result => ({ type: "coverImage", result }))
+      );
+    }
+
+    if (uploadPromises.length > 0) {
+      const uploads = await Promise.all(uploadPromises);
+      uploads.forEach(upload => {
+        if (upload.type === "avatar") {
+          avatarUpload = upload.result;
+        } else if (upload.type === "coverImage") {
+          coverUpload = upload.result;
+        }
+      });
     }
 
     // Create the user
@@ -53,8 +76,8 @@ export const AuthService = {
       email: data.email,
       username: data.username,
       password: data.password,
-      avatar: avatarUpload.url || undefined,
-      coverImage: coverUpload.url || undefined,
+      avatar: avatarUpload?.url || undefined,
+      coverImage: coverUpload?.url || undefined,
     });
 
     return created;

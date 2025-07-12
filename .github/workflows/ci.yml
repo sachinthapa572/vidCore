@@ -1,0 +1,50 @@
+# .github/workflows/test.yml
+# Created by: Sachin Thapa (sachinthapa572)
+name: Run Bun Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest # Or pin to a specific version, e.g., "1.0.25"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Setup environment
+        run: cp .env.example .env
+
+      - name: Run Biome lint & format check
+        run: bunx biome check .
+
+      - name: Start server
+        run: bun run dev &
+
+      - name: Wait for server
+        run: |
+          echo "Waiting for server to start..."
+          timeout 30s bash -c \
+            'while ! nc -z localhost 8080; do
+              echo "Still waiting..."
+              sleep 1
+            done'
+          echo "Server is up!"
+
+      - name: Run tests
+        run: bun test

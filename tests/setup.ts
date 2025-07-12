@@ -1,15 +1,26 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 
-let mongoServer: MongoMemoryServer;
+let mongoServer
 
 export async function setupTestDB() {
-  mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
-  await mongoose.connect(uri);
+  try {
+    mongoServer = await MongoMemoryServer.create();
+    const uri = mongoServer.getUri();
+    await mongoose.connect(uri);
+  } catch (error) {
+    console.error('Failed to setup test database:', error);
+    throw error;
+  }
 }
 
 export async function teardownTestDB() {
-  await mongoose.disconnect();
-  if (mongoServer) await mongoServer.stop();
+  try {
+    await mongoose.disconnect();
+    if (mongoServer) await mongoServer.stop();
+    mongoServer = null;
+  } catch (error) {
+    console.error('Failed to teardown test database:', error);
+    throw error;
+  }
 }

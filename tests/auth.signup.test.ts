@@ -43,6 +43,7 @@ test("signup with duplicate email fails", async () => {
     formData1.append("username", faker.person.firstName());
     formData1.append("password", faker.internet.password({ length: 12, memorable: false }));
     formData1.append("email", duplicateEmail);
+    formData1.append("fullName", faker.person.fullName());
 
     await fetch(signupUrl, {
         method: "POST",
