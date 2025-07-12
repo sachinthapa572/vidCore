@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { poweredBy } from "hono/powered-by";
 import { prettyJSON } from "hono/pretty-json";
+import { timing } from "hono/timing";
 
 import type { envBinding } from "../db/env";
 import serveEmojiFavicon from "../utils/serve-emoji-favicon";
@@ -23,6 +24,7 @@ export function createApp() {
   });
 
   app.use("*", poweredBy());
+  app.use("*", timing());
 
   app.use(
     "*",

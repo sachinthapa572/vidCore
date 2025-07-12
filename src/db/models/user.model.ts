@@ -1,26 +1,22 @@
-import { type Model, model, Schema } from "mongoose";
-
-import type { ObjectId, WithDoc } from "@/types/type";
+import { type Model, model, Schema, type Types } from "mongoose";
 
 export type Methods = {
   isPasswordCorrect(pwd: string): Promise<boolean>;
 };
 
-export type IUser = WithDoc<{
+export type IUser = {
+  _id: Types.ObjectId;
   username: string;
   email: string;
   fullName: string;
   avatar: string;
   coverImage?: string;
-  watchHistory: ObjectId[];
+  watchHistory: Types.ObjectId[];
   password: string;
-  refreshToken?: string;
-}> &
-  Methods;
+  refreshToken: string;
+};
 
-export type UserModel = Model<IUser>;
-
-const userSchema = new Schema<IUser, UserModel, Methods>(
+export const userSchema = new Schema<IUser, Model<IUser>, Methods>(
   {
     username: {
       type: String,
@@ -71,13 +67,6 @@ const userSchema = new Schema<IUser, UserModel, Methods>(
   },
   {
     timestamps: true,
-    toJSON: {
-      transform: (_doc, ret) => {
-        // delete ret.password;
-        // delete ret.refreshToken;
-        return ret;
-      },
-    },
   }
 );
 
@@ -100,4 +89,4 @@ userSchema.methods.isPasswordCorrect = async function (this: IUser, pwd: string)
 };
 
 // ✅ Export the model
-export const User = model<IUser>("User", userSchema);
+export const User = model("User", userSchema);

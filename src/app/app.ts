@@ -1,5 +1,5 @@
 import { errorHandler, notFoundHandler } from "@/middlewares/error.middlewares";
-import { authRouter } from "@/routes";
+import userRouter from "@/routes/user.route";
 
 import dbConnect from "../db/database.config";
 import appEnv from "../db/env";
@@ -16,7 +16,7 @@ app.get("/", c => {
   return c.json({ message: "Hello Hono!" }, 200);
 });
 
-app.basePath("/users").route("/", authRouter);
+app.route("/users/", userRouter);
 
 app.onError(errorHandler);
 app.notFound(notFoundHandler);

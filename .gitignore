@@ -144,3 +144,4 @@ vite.config.ts.timestamp-*
 1vidcore/
 .github/copilot-instructions.md
 public/
+test.ts

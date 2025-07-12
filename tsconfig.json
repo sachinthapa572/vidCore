@@ -8,13 +8,13 @@
     "jsxImportSource": "hono/jsx",
 
     // === Base URL & Path Aliases ===
-    "baseUrl": ".", // Root directory for imports
+    // "baseUrl": ".", // Root directory for imports
 
     // === Module Resolution ===
     "module": "ESNext", // Use ESNext modules
     "moduleResolution": "bundler", // Bun-style module resolution
     "paths": {
-      "@/*": ["src/*"] // Alias '@/' to 'src/'
+      "@/*": ["./src/*"] // Alias '@/' to 'src/'
     },
     "resolveJsonModule": true, // Allow importing JSON files
 
