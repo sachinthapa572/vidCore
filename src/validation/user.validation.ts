@@ -38,7 +38,7 @@ export const updateImageschema = userValidationSchema
     avatar: true,
   })
   .check(ctx => {
-    if (ctx.value.avatar || ctx.value.coverImage) {
+    if (!ctx.value.avatar && !ctx.value.coverImage) {
       ctx.issues.push({
         code: "custom",
         message: "at least one field is required",
@@ -54,8 +54,8 @@ export const userLoginSchema = z.object({
 
 export const updatePasswordSchema = z
   .object({
-    oldPassword: z.string().min(6, "Old password must be at least 6 characters"),
-    newPassword: z.string().min(6, "New password must be at least 6 characters"),
+    oldPassword: z.string().min(8, "Old password must be at least 8 characters"),
+    newPassword: z.string().min(8, "New password must be at least 8 characters"),
   })
   .check(ctx => {
     if (ctx.value.oldPassword === ctx.value.newPassword) {
@@ -73,9 +73,9 @@ export const updateAccountSchema = userValidationSchema
     email: true,
     username: true,
   })
-  .optional()
+  .partial()
   .check(ctx => {
-    if (ctx.value && !ctx.value.fullName && !ctx.value.email && !ctx.value.username) {
+    if (!ctx.value.fullName && !ctx.value.email && !ctx.value.username) {
       ctx.issues.push({
         code: "custom",
         message: "At least one field must be updated",

@@ -35,7 +35,7 @@ userRouter
     const result = await AuthService.loginUser(data);
 
     // Set cookies
-    setCookie(c, "accessToken", result.refreshToken, cookiesOptions);
+    setCookie(c, "accessToken", result.accessToken, cookiesOptions);
     setCookie(c, "refreshToken", result.refreshToken, cookiesOptions);
 
     return sendSuccessResponse(c, result, "Login successful", HttpStatusCode.OK);

@@ -10,7 +10,7 @@ import { throwError } from "@/utils/api-error";
 import { formatUserProfile, type UserProfile } from "@/utils/helper.utils";
 
 import { imageKitService } from "../config/imagekit";
-import { type IUser, User } from "../db/models/user.model";
+import { User, type IUser } from "../db/models/user.model";
 import type {
   UpdateImageInput,
   UserLoginInput,
@@ -110,12 +110,13 @@ export const AuthService = {
     }
 
     const userId = existingUser._id.toString();
-    const token = await generateJwtToken(userId);
+    const accessToken = await generateJwtToken(userId);
+    const refreshToken = await generateJwtToken(userId);
 
     // Remove password field before returning user
     const updatedUser: HydratedDocument<IUser> | null = await User.findByIdAndUpdate(
       existingUser._id,
-      { refreshToken: token },
+      { refreshToken: refreshToken },
       { new: true }
     );
 
@@ -127,7 +128,11 @@ export const AuthService = {
       );
     }
 
-    return formatUserProfile(updatedUser);
+    return {
+      user: formatUserProfile(updatedUser),
+      accessToken,
+      refreshToken,
+    };
   },
 
   async logoutUser(userId: Types.ObjectId) {
