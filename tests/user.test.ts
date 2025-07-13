@@ -18,7 +18,7 @@ beforeAll(async () => {
   await setupTestDB();
   const formData = new FormData();
   formData.append("username", user.username);
-  formData.append("password", user.password);
+  formData.append("password", user.password);206018
   formData.append("email", user.email);
   formData.append("fullName", user.fullName);
 
