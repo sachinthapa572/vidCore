@@ -1,5 +1,8 @@
 import { type Model, model, Schema, type Types } from "mongoose";
 
+import { HttpStatusCode } from "@/enum/http-status-codes.enum";
+import { throwError } from "@/utils/api-error";
+
 export type Methods = {
   isPasswordCorrect(pwd: string): Promise<boolean>;
 };
@@ -9,8 +12,14 @@ export type IUser = {
   username: string;
   email: string;
   fullName: string;
-  avatar?: string;
-  coverImage?: string;
+  avatar?: {
+    url: string;
+    publicId: string;
+  };
+  coverImage?: {
+    url: string;
+    publicId: string;
+  };
   watchHistory: Types.ObjectId[];
   password: string;
   refreshToken: string;
@@ -44,10 +53,24 @@ export const userSchema = new Schema<IUser, Model<IUser>, Methods>(
       index: true,
     },
     avatar: {
-      type: String,
+      url: {
+        type: String,
+        default: "",
+      },
+      publicId: {
+        type: String,
+        default: "",
+      },
     },
     coverImage: {
-      type: String,
+      url: {
+        type: String,
+        default: "",
+      },
+      publicId: {
+        type: String,
+        default: "",
+      },
     },
     watchHistory: [
       {
@@ -85,6 +108,14 @@ userSchema.pre("save", async function (next) {
 // ✅ Instance method
 userSchema.methods.isPasswordCorrect = async function (this: IUser, pwd: string) {
   return await Bun.password.verify(pwd, this.password);
+};
+
+userSchema.statics.checkValidUser = async function (id: Types.ObjectId) {
+  const user = await this.findById(id);
+  if (!user) {
+    return throwError(HttpStatusCode.NOT_FOUND, "User not found");
+  }
+  return user;
 };
 
 // ✅ Export the model

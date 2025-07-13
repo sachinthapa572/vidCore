@@ -21,7 +21,9 @@ class ImageKitService {
       throw new Error("Missing required upload data: file and fileName.");
     }
     try {
-      return await this.imagekit.upload({ ...data });
+      const ik = await this.imagekit.upload({ ...data });
+      console.log("ImageKit upload response:", ik);
+      return ik;
     } catch (error) {
       // Log error securely
       console.error("ImageKit upload error:", error);

@@ -1,3 +1,5 @@
+import { jwt, sign } from "hono/jwt";
+
 import { errorHandler, notFoundHandler } from "@/middlewares/error.middlewares";
 import userRouter from "@/routes/user.route";
 
@@ -15,6 +17,24 @@ if (typeof process !== "undefined") {
 app.get("/", c => {
   return c.json({ message: "Hello Hono!" }, 200);
 });
+
+app.get("/t", async c => {
+  const data = await sign({ userId: "Sachin Thapa" }, appEnv.JWT_SECRET);
+
+  return c.json({ token: data }, 200);
+});
+app.get(
+  "/verify",
+  jwt({
+    secret: appEnv.JWT_SECRET,
+  }),
+  async c => {
+    const payload = c.get("jwtPayload");
+
+    console.log(payload);
+    return c.json({ token: payload }, 200);
+  }
+);
 
 app.route("/users/", userRouter);
 

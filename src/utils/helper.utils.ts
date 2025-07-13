@@ -15,14 +15,16 @@ export const cookiesOptions: CookieOptions = {
   sameSite: "Strict",
 };
 
-export const formatUserProfile = (user: IUser): Omit<IUser, "password" | "watchHistory"> => {
+export const formatUserProfile = (user: IUser) => {
   return {
     _id: user._id,
     email: user.email,
-    avatar: user.avatar,
+    avatar: user.avatar?.url || "",
     username: user.username,
     fullName: user.fullName,
-    coverImage: user.coverImage,
+    coverImage: user.coverImage?.url || "",
     refreshToken: user.refreshToken,
   };
 };
+
+export type UserProfile = ReturnType<typeof formatUserProfile>;
