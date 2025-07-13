@@ -15,6 +15,7 @@ import type {
   UpdateImageInput,
   UserLoginInput,
   UserValidationInput,
+  updateAccountInput,
 } from "../validation/user.validation";
 
 export const AuthService = {
@@ -313,6 +314,61 @@ export const AuthService = {
       coverImage: updatedUser.coverImage,
       avatar: updatedUser.avatar,
     };
+  },
+
+  async updateAccount(data: updateAccountInput, id: Types.ObjectId) {
+    const user = await User.findById(id);
+
+    if (!user) {
+      return throwError(HttpStatusCode.NOT_FOUND, "User not found", "USER_NOT_FOUND");
+    }
+
+    // create a set data query
+    const updateData: { fullName?: string; email?: string; username?: string } = {};
+
+    // Validate at least one field is provided
+    if (data?.fullName) {
+      updateData.fullName = data.fullName;
+    }
+    if (data?.email) {
+      updateData.email = data.email;
+    }
+    if (data?.username) {
+      updateData.username = data.username;
+    }
+
+    // Check for unique constraints
+    if (data?.email && data.email !== user.email) {
+      const existingEmailUser = await User.findOne({ email: data.email });
+      if (existingEmailUser) {
+        return throwError(HttpStatusCode.CONFLICT, "Email already in use", "EMAIL_EXISTS");
+      }
+    }
+
+    if (data?.username && data?.username !== user.username) {
+      const existingUsernameUser = await User.findOne({ username: data.username });
+      if (existingUsernameUser) {
+        return throwError(HttpStatusCode.CONFLICT, "Username already in use", "USERNAME_EXISTS");
+      }
+    }
+
+    const updatedUser: HydratedDocument<IUser> | null = await User.findByIdAndUpdate(
+      id,
+      {
+        $set: updateData,
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return throwError(
+        HttpStatusCode.INTERNAL_SERVER_ERROR,
+        "Failed to update account",
+        "ACCOUNT_UPDATE_FAILED"
+      );
+    }
+
+    return formatUserProfile(updatedUser);
   },
 };
 

@@ -12,6 +12,7 @@ import { cookiesOptions } from "@/utils/helper.utils";
 import { sendSuccessResponse } from "@/utils/response.utils";
 import { zCustomValidator } from "@/utils/zod-validator.utils";
 import {
+  updateAccountSchema,
   updateImageschema,
   updatePasswordSchema,
   userLoginSchema,
@@ -87,6 +88,12 @@ userRouter
     const result = await AuthService.updateImage(data, user._id);
 
     return sendSuccessResponse(c, result, "Image Update Sucessfully", HttpStatusCode.OK);
+  })
+  .patch("/update-account", zCustomValidator("form", updateAccountSchema), async c => {
+    const data = c.req.valid("form");
+    const user = c.get("user");
+    const result = await AuthService.updateAccount(data, user._id);
+    return sendSuccessResponse(c, result, "Account updated successfully", HttpStatusCode.OK);
   });
 
 export default userRouter;

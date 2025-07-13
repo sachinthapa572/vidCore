@@ -15,8 +15,7 @@ export const userValidationSchema = z.object({
   username: z
     .string({ error: "Invalid username" })
     .min(3, "Username must be at least 3 characters")
-    .max(30, "Username must be at most 30 characters")
-    .regex(/^\w+$/, "Username can only contain letters, numbers, and underscores"),
+    .max(30, "Username must be at most 30 characters"),
   password: z
     .string({ error: "Invalid password" })
     .min(8, "Password must be at least 8 characters")
@@ -41,10 +40,7 @@ export const updateImageschema = userValidationSchema
   .check(ctx => {
     if (ctx.value.avatar || ctx.value.coverImage) {
       ctx.issues.push({
-        code: "too_big",
-        maximum: 3,
-        origin: "image",
-        inclusive: true,
+        code: "custom",
         message: "at least one field is required",
         input: ctx.value,
       });
@@ -64,11 +60,25 @@ export const updatePasswordSchema = z
   .check(ctx => {
     if (ctx.value.oldPassword === ctx.value.newPassword) {
       ctx.issues.push({
-        code: "too_big",
-        maximum: 3,
-        origin: "oldPassword",
-        inclusive: true,
+        code: "custom",
         message: "Passwords must be different",
+        input: ctx.value,
+      });
+    }
+  });
+
+export const updateAccountSchema = userValidationSchema
+  .pick({
+    fullName: true,
+    email: true,
+    username: true,
+  })
+  .optional()
+  .check(ctx => {
+    if (ctx.value && !ctx.value.fullName && !ctx.value.email && !ctx.value.username) {
+      ctx.issues.push({
+        code: "custom",
+        message: "At least one field must be updated",
         input: ctx.value,
       });
     }
@@ -77,3 +87,4 @@ export const updatePasswordSchema = z
 export type UserValidationInput = z.infer<typeof userValidationSchema>;
 export type UpdateImageInput = z.infer<typeof updateImageschema>;
 export type UserLoginInput = z.infer<typeof userLoginSchema>;
+export type updateAccountInput = z.infer<typeof updateAccountSchema>;
