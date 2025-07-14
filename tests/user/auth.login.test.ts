@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
-import { setupTestDB, teardownTestDB } from './setup';
+import { setupTestDB, teardownTestDB } from '../setup';
 
 const loginUrl = 'http://localhost:8080/api/v1/users/login';
 const signupUrl = 'http://localhost:8080/api/v1/users/register';

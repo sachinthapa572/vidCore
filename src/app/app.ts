@@ -36,7 +36,10 @@ app.get(
   }
 );
 
+import videoRouter from "@/routes/video.route";
+
 app.route("/users/", userRouter);
+app.route("/videos/", videoRouter);
 
 app.onError(errorHandler);
 app.notFound(notFoundHandler);

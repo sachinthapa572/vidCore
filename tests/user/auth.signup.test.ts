@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
 import mongoose from "mongoose";
-import { setupTestDB, teardownTestDB } from "./setup";
+import { setupTestDB, teardownTestDB } from "../setup";
 
 const signupUrl = 'http://localhost:8080/api/v1/users/register';
 

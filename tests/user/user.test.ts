@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { setupTestDB, teardownTestDB } from "./setup";
+import { setupTestDB, teardownTestDB } from "../setup";
 
 const baseUrl = "http://localhost:8080/api/v1/users";
 let accessToken: string;

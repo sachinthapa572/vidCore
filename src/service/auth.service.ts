@@ -10,7 +10,7 @@ import { throwError } from "@/utils/api-error";
 import { formatUserProfile, type UserProfile } from "@/utils/helper.utils";
 
 import { imageKitService } from "../config/imagekit";
-import { User, type IUser } from "../db/models/user.model";
+import { type IUser, User } from "../db/models/user.model";
 import type {
   UpdateImageInput,
   UserLoginInput,

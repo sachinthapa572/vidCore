@@ -5,8 +5,14 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 import type { ObjectId, WithDoc } from "@/types/type";
 
 export type IVideo = WithDoc<{
-  videoFile: string;
-  thumbnail: string;
+  videoFile: {
+    url: string;
+    publicId: string;
+  };
+  thumbnail: {
+    url: string;
+    publicId: string;
+  };
   title: string;
   description: string;
   duration: number;
@@ -20,12 +26,24 @@ export type VideoModel = Model<IVideo>;
 const videoSchema = new Schema<IVideo, VideoModel>(
   {
     videoFile: {
-      type: String, // cloudinary url
-      required: true,
+      url: {
+        type: String,
+        required: [true, "Video file URL is required"],
+      },
+      publicId: {
+        type: String,
+        required: [true, "Video file public ID is required"],
+      },
     },
     thumbnail: {
-      type: String, // cloudinary url
-      required: true,
+      url: {
+        type: String,
+        required: [true, "Thumbnail URL is required"],
+      },
+      publicId: {
+        type: String,
+        required: [true, "Thumbnail public ID is required"],
+      },
     },
     title: {
       type: String,

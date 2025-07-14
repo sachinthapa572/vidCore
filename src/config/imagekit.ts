@@ -1,5 +1,5 @@
 import ImageKit from "imagekit";
-import type { UploadOptions, UploadResponse } from "imagekit/dist/libs/interfaces";
+import type { UploadOptions, UploadResponse, UrlOptions } from "imagekit/dist/libs/interfaces";
 import type IKResponse from "imagekit/dist/libs/interfaces/IKResponse";
 
 import appEnv from "@/db/env";
@@ -44,6 +44,23 @@ class ImageKitService {
       throw new Error("Failed to delete image.");
     }
   }
-}
 
+  async generateFileUrl(data: UrlOptions): Promise<string> {
+    if (!data.path) {
+      throw new Error("Missing path for generating URL.");
+    }
+    try {
+      const ik = this.imagekit.url({
+        ...data,
+      });
+
+      console.log("ImageKit generated URL:", ik);
+      return ik;
+    } catch (error) {
+      // Log error securely
+      console.error("ImageKit generate URL error:", error);
+      throw new Error("Failed to generate image URL.");
+    }
+  }
+}
 export const imageKitService = new ImageKitService();
