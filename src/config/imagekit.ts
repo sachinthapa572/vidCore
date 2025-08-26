@@ -32,7 +32,7 @@ class ImageKitService {
   }
 
   // Remove the image from ImageKit
-  async delete(fileId: string): Promise<IKResponse<void>> {
+  async deleteFile(fileId: string): Promise<IKResponse<void>> {
     if (!fileId) {
       throw new Error("Missing fileId for deletion.");
     }

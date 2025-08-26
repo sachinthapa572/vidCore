@@ -10,7 +10,7 @@ import { throwError } from "@/utils/api-error";
 import { formatUserProfile, type UserProfile } from "@/utils/helper.utils";
 
 import { imageKitService } from "../config/imagekit";
-import { type IUser, User } from "../db/models/user.model";
+import { User, type IUser } from "../db/models/user.model";
 import type {
   UpdateImageInput,
   UserLoginInput,
@@ -227,10 +227,10 @@ export const AuthService = {
 
     // Delete existing images if replacing
     if (data.avatar && user.avatar?.publicId) {
-      await imageKitService.delete(user.avatar.publicId);
+      await imageKitService.deleteFile(user.avatar.publicId);
     }
     if (data.coverImage && user.coverImage?.publicId) {
-      await imageKitService.delete(user.coverImage.publicId);
+      await imageKitService.deleteFile(user.coverImage.publicId);
     }
     // Prepare upload result containers
     const avatarUpload = { url: "", publicId: "" };

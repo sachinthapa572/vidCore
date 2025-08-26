@@ -1,3 +1,5 @@
+# vidCore
+
 To install dependencies:
 
 ```sh
