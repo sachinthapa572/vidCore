@@ -26,13 +26,6 @@ const videoValidationSchema = z.object({
       message: "Description must be no more than 5000 characters long",
     }),
 
-  //   owner: requiredError("Owner ID")
-  //     .refine(val => Types.ObjectId.isValid(val), {
-  //       message: "Invalid Owner ID format",
-  //     })
-  //     .transform(val => new Types.ObjectId(val))
-  //     .optional(),
-
   videoFile: fileError("Video file")
     .max(100 * 1024 * 1024, { message: "Video file must be less than 100MB" })
     .mime(

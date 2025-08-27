@@ -55,7 +55,7 @@ interface JobSummary {
   failReason: string | null;
   repeatInterval: string | null | undefined;
   repeatTimezone: string | null | undefined;
-  data: any;
+  data: Record<string, unknown>;
 }
 
 /**
@@ -110,7 +110,7 @@ dashboard.get("/jobs", zCustomValidator("query", jobFilterSchema), async c => {
   try {
     const { status = "all", type, limit = 20, skip = 0 } = c.req.valid("query");
 
-    const query: any = {};
+    const query: Record<string, unknown> = {};
 
     // Apply status filter
     if (status === "running") {
@@ -377,11 +377,13 @@ dashboard.get("/videos/deleted", async c => {
     const videosWithRecoveryInfo = deletedVideos.map(video => {
       const deletedAt = video.deletedAt ? new Date(video.deletedAt) : null;
       const now = new Date();
-      const daysSinceDeletion = deletedAt ? Math.floor((now.getTime() - deletedAt.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+      const daysSinceDeletion = deletedAt
+        ? Math.floor((now.getTime() - deletedAt.getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
       const daysLeft = Math.max(0, 7 - daysSinceDeletion);
 
       return {
-        _id: (video._id as any).toString(),
+        _id: video._id,
         title: video.title,
         description: video.description,
         deletedAt: video.deletedAt,
@@ -406,7 +408,7 @@ dashboard.get("/videos/deleted", async c => {
  * POST /agenda-dashboard/videos/:videoId/recover
  * Recover a soft deleted video
  */
-dashboard.post("/videos/:videoId/recover", zCustomValidator("param", jobIdSchema), async c => {
+dashboard.post("/videos/:jobId/recover", zCustomValidator("param", jobIdSchema), async c => {
   try {
     const { jobId: videoId } = c.req.valid("param");
 
@@ -478,7 +480,7 @@ dashboard.post("/videos/:videoId/recover", zCustomValidator("param", jobIdSchema
  * POST /agenda-dashboard/videos/:videoId/force-delete
  * Force delete a video immediately (admin function)
  */
-dashboard.post("/videos/:videoId/force-delete", zCustomValidator("param", jobIdSchema), async c => {
+dashboard.post("/videos/:jobId/force-delete", zCustomValidator("param", jobIdSchema), async c => {
   try {
     const { jobId: videoId } = c.req.valid("param");
 
@@ -505,7 +507,11 @@ dashboard.post("/videos/:videoId/force-delete", zCustomValidator("param", jobIdS
       thumbnailPublicId: video.thumbnail?.publicId,
     };
 
-    const hardDeleteJob = await agenda.schedule("now", JOB_TYPES.HARD_DELETE_VIDEO, hardDeleteJobData);
+    const hardDeleteJob = await agenda.schedule(
+      "now",
+      JOB_TYPES.HARD_DELETE_VIDEO,
+      hardDeleteJobData
+    );
 
     return c.json({
       success: true,

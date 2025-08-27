@@ -11,8 +11,9 @@ export class LocalFileStorage implements FileStorageInterface {
     } catch {
       await fs.mkdir(dirPath, { recursive: true });
     }
-    const timestamp = Date.now();
-    const uniqueName = `${file.name}_${timestamp}`;
+    const parsed = path.parse(file.name);
+    const uuid = crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 10);
+    const uniqueName = `${parsed.name}-${uuid}${parsed.ext}`;
     const filePath = path.join(dirPath, uniqueName);
     await Bun.write(filePath, file);
     return {
