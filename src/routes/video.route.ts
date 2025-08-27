@@ -31,7 +31,6 @@ videoRouter
     const data = c.req.valid("form");
     const { _id } = c.get("user");
     const newVideo = await videoService.publishVideo({ ...data, owner: _id });
-    console.log("to send the response the data has never come here ");
 
     return sendSuccessResponse(c, newVideo, "Video published successfully", HttpStatusCode.ACCEPTED);
   })
