@@ -8,6 +8,7 @@ import "@/services/agenda/processors"; // Register job processors
 import agendaDashboardUIRouter from "@/routes/agenda-dashboard-ui.route";
 import agendaDashboardRouter from "@/routes/agenda-dashboard.route";
 import healthRouter from "@/routes/health.route";
+import likeRouter from "@/routes/like.route";
 import videoRouter from "@/routes/video.route";
 
 import dbConnect from "../db/database.config";
@@ -56,6 +57,7 @@ app.get(
 app.route("/", healthRouter);
 app.route("/users/", userRouter);
 app.route("/videos/", videoRouter);
+app.route("/likes/", likeRouter);
 app.route("/agenda/", agendaDashboardRouter);
 app.route("/agenda/", agendaDashboardUIRouter);
 
