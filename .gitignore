@@ -145,3 +145,5 @@ vite.config.ts.timestamp-*
 .github/copilot-instructions.md
 public/
 test.ts
+GEMINI.md
+image.png
