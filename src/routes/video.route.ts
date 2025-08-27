@@ -2,7 +2,7 @@ import { Hono } from "hono";
 
 import { HttpStatusCode } from "@/enum/http-status-codes.enum";
 import authMiddleware from "@/middlewares/is-authmiddleware";
-import { videoService } from "@/service/video.service";
+import { videoService } from "@/services/video.service";
 import { sendSuccessResponse } from "@/utils/response.utils";
 import { zCustomValidator } from "@/utils/zod-validator.utils";
 import videoValidationSchema, {
