@@ -33,7 +33,7 @@ videoRouter
     const newVideo = await videoService.publishVideo({ ...data, owner: _id });
     console.log("to send the response the data has never come here ");
 
-    return sendSuccessResponse(c, newVideo, "Video published successfully", HttpStatusCode.OK);
+    return sendSuccessResponse(c, newVideo, "Video published successfully", HttpStatusCode.ACCEPTED);
   })
   .get("/:id", zCustomValidator("param", idParamSchema), async c => {
     const videoId = c.req.param("id");
