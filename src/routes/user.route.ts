@@ -6,7 +6,7 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 
 import { HttpStatusCode } from "@/enum/http-status-codes.enum";
 import authMiddleware from "@/middlewares/is-authmiddleware";
-import { AuthService } from "@/service/auth.service";
+import { AuthService } from "@/services/auth.service";
 import { throwError } from "@/utils/api-error";
 import { cookiesOptions } from "@/utils/helper.utils";
 import { sendSuccessResponse } from "@/utils/response.utils";
