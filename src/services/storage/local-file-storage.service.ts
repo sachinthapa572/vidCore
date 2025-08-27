@@ -11,11 +11,13 @@ export class LocalFileStorage implements FileStorageInterface {
     } catch {
       await fs.mkdir(dirPath, { recursive: true });
     }
-    const filePath = path.join(dirPath, file.name);
+    const timestamp = Date.now();
+    const uniqueName = `${file.name}_${timestamp}`;
+    const filePath = path.join(dirPath, uniqueName);
     await Bun.write(filePath, file);
     return {
-      url: `/${folder}/${file.name}`,
-      publicId: file.name,
+      url: `/${folder}/${uniqueName}`,
+      publicId: uniqueName,
     };
   }
 

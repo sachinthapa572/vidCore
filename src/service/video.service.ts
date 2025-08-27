@@ -1,10 +1,15 @@
-import ffmpeg from "fluent-ffmpeg";
-import { Types } from "mongoose";
+import type { Types } from "mongoose";
 
-import { storageConfig } from "@/config/storage.config";
+import {
+  agenda,
+  JOB_TYPES,
+  type RecoverVideoJobData,
+  type SoftDeleteVideoJobData,
+  type UpdateVideoJobData,
+  type VideoJobData,
+} from "@/config/agenda";
 import { Video } from "@/db/models/video.model";
 import { HttpStatusCode } from "@/enum/http-status-codes.enum";
-import { createStorage } from "@/services/storage/storage.factory";
 import { throwError } from "@/utils/api-error";
 import type { SortByEnum, SortTypeEnum, videoValidationInput } from "@/validation/video.validation";
 
@@ -17,29 +22,11 @@ interface PaginationOptions {
   userId?: Types.ObjectId;
 }
 
-/* Utility: get video duration */
-export const getVideoDuration = async (videoPath: string): Promise<number> => {
-  return new Promise<number>((resolve, reject) => {
-    ffmpeg.ffprobe(videoPath, (err, metadata) => {
-      if (err) {
-        reject(new Error("Error extracting video duration"));
-      } else {
-        const rawDuration = metadata?.format?.duration;
-        const durationNumber = typeof rawDuration === "number" ? rawDuration : Number(rawDuration);
-        if (Number.isFinite(durationNumber)) {
-          resolve(durationNumber);
-        } else {
-          resolve(0);
-        }
-      }
-    });
-  });
-};
-
 export const getAllVideos = async (data: PaginationOptions) => {
   const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = data;
 
   const match = {
+    isDeleted: { $ne: true }, // Exclude soft deleted videos
     ...(query && { title: { $regex: query, $options: "i" } }),
     ...(userId && { owner: userId }),
   };
@@ -63,6 +50,12 @@ export const getAllVideos = async (data: PaginationOptions) => {
         duration: 1,
         views: 1,
         isPublished: 1,
+        uploadStatus: 1,
+        jobId: 1,
+        errorMessage: 1,
+        retryCount: 1,
+        createdAt: 1,
+        updatedAt: 1,
         owner: {
           $arrayElemAt: ["$videosByOwner", 0],
         },
@@ -77,55 +70,48 @@ export const getAllVideos = async (data: PaginationOptions) => {
     { $limit: limit },
   ]);
 
-  if (videos?.length) {
+  if (!videos?.length) {
     throwError(HttpStatusCode.NOT_FOUND, "Videos not found");
   }
   return videos;
 };
 
-export const publishVideo = async (data: videoValidationInput) => {
-  const videoStorage = createStorage(storageConfig.videoStorage);
-  const thumbnailStorage = createStorage(storageConfig.thumbnailStorage);
-
-  const [videoUpload, thumbnailUpload] = await Promise.all([
-    videoStorage.uploadFile(data.videoFile, "videos"),
-    thumbnailStorage.uploadFile(data.thumbnail, "thumbnails"),
-  ]);
-
-  const duration = await getVideoDuration(videoUpload.url);
-
-  console.log("Video duration:", data.videoFile.size);
-
-  const videoDocs = await Video.create({
-    videoFile: {
-      url: videoUpload.url,
-      publicId: videoUpload.publicId,
-    },
-    thumbnail: {
-      url: thumbnailUpload.url,
-      publicId: thumbnailUpload.publicId,
-    },
+export const publishVideo = async (data: videoValidationInput & { owner: Types.ObjectId }) => {
+  const videoDoc = new Video({
     title: data.title,
     description: data.description,
-    owner: new Types.ObjectId(data.owner),
-    duration: duration,
+    owner: data.owner,
+    uploadStatus: "pending",
+    retryCount: 0,
   });
+  await videoDoc.save({ validateBeforeSave: false });
 
-  if (!videoDocs) {
-    throwError(HttpStatusCode.INTERNAL_SERVER_ERROR, "Failed to create video");
+  if (!videoDoc) {
+    throwError(HttpStatusCode.INTERNAL_SERVER_ERROR, "Failed to create video record");
   }
 
+  // Submit job to agenda queue
+  const jobData: VideoJobData = {
+    videoId: (videoDoc._id as Types.ObjectId).toString(),
+    videoFile: data.videoFile,
+    thumbnail: data.thumbnail,
+    title: data.title,
+    description: data.description,
+    owner: data.owner,
+  };
+
+  const job = await agenda.schedule("now", JOB_TYPES.PROCESS_VIDEO, jobData);
+
+  console.log(`Video upload job scheduled with ID: ${job.attrs._id}`);
+
   return {
-    thumbnail: {
-      url: videoDocs.thumbnail.url,
-      publicId: videoDocs.thumbnail.publicId,
-    },
-    title: videoDocs.title,
-    description: videoDocs.description,
-    duration: videoDocs.duration,
-    views: videoDocs.views,
-    isPublished: videoDocs.isPublished,
-    owner: videoDocs.owner,
+    videoId: (videoDoc._id as Types.ObjectId).toString(),
+    jobId: job.attrs._id.toString(),
+    title: videoDoc.title,
+    description: videoDoc.description,
+    uploadStatus: videoDoc.uploadStatus,
+    owner: videoDoc.owner,
+    message: "Video upload has been queued for processing",
   };
 };
 
@@ -139,140 +125,147 @@ export const getVideoById = async (videoId: string) => {
   return video;
 };
 
+export const getVideoStatus = async (videoId: string) => {
+  const video = await Video.findById(videoId).select(
+    "uploadStatus jobId errorMessage retryCount title description createdAt updatedAt"
+  );
+
+  if (!video) {
+    throwError(HttpStatusCode.NOT_FOUND, "Video not found");
+    return;
+  }
+
+  return {
+    videoId: video._id,
+    title: video.title,
+    description: video.description,
+    uploadStatus: video.uploadStatus,
+    jobId: video.jobId,
+    errorMessage: video.errorMessage,
+    retryCount: video.retryCount,
+    createdAt: video.createdAt,
+    updatedAt: video.updatedAt,
+  };
+};
+
 export const updateVideo = async (data: Partial<videoValidationInput> & { videoId: string }) => {
   const { videoId, title, description, thumbnail, videoFile } = data;
 
+  // Check if video exists
   const video = await Video.findById(videoId);
   if (!video) {
     throwError(HttpStatusCode.NOT_FOUND, "Video not found");
     return;
   }
 
-  const updatedFields: {
-    title?: string;
-    description?: string;
-    videoFile?: { url: string; publicId: string };
-    thumbnail?: { url: string; publicId: string };
-    duration?: number;
-  } = {};
+  // Schedule update job
+  const jobData: UpdateVideoJobData = {
+    videoId,
+    title,
+    description,
+    thumbnail,
+    videoFile,
+  };
 
-  if (title) updatedFields.title = title;
-  if (description) updatedFields.description = description;
+  const job = await agenda.schedule("now", JOB_TYPES.UPDATE_VIDEO, jobData);
 
-  let newVideoUpload: { url: string; publicId: string } | undefined;
-  let newThumbnailUpload: { url: string; publicId: string } | undefined;
+  console.log(`Video update job scheduled with ID: ${job.attrs._id}`);
 
-  try {
-    if (videoFile) {
-      const videoStorage = createStorage(storageConfig.videoStorage);
-      newVideoUpload = await videoStorage.uploadFile(videoFile, "videos");
-      updatedFields.videoFile = newVideoUpload;
-      updatedFields.duration = await getVideoDuration(newVideoUpload.url);
-    }
-    if (thumbnail) {
-      const thumbnailStorage = createStorage(storageConfig.thumbnailStorage);
-      newThumbnailUpload = await thumbnailStorage.uploadFile(thumbnail, "thumbnails");
-      updatedFields.thumbnail = newThumbnailUpload;
-    }
-
-    if (Object.keys(updatedFields).length === 0) {
-      return video;
-    }
-
-    const updatedVideo = await Video.findByIdAndUpdate(
-      videoId,
-      { $set: updatedFields },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedVideo) {
-      throwError(
-        HttpStatusCode.INTERNAL_SERVER_ERROR,
-        "Failed to update video in the database. Please try again."
-      );
-      return;
-    }
-
-    const deletePromises: Promise<void>[] = [];
-    if (newVideoUpload && video.videoFile?.publicId) {
-      const videoStorage = createStorage(storageConfig.videoStorage);
-      deletePromises.push(videoStorage.deleteFile(video.videoFile.publicId));
-    }
-    if (newThumbnailUpload && video.thumbnail?.publicId) {
-      const thumbnailStorage = createStorage(storageConfig.thumbnailStorage);
-      deletePromises.push(thumbnailStorage.deleteFile(video.thumbnail.publicId));
-    }
-
-    if (deletePromises.length > 0) {
-      const deleteResults = await Promise.allSettled(deletePromises);
-      deleteResults.forEach(result => {
-        if (result.status === "rejected") {
-          console.error("Failed to delete old file after update:", result.reason);
-        }
-      });
-    }
-
-    return updatedVideo;
-  } catch (error) {
-    const cleanupPromises: Promise<void>[] = [];
-    if (newVideoUpload) {
-      const videoStorage = createStorage(storageConfig.videoStorage);
-      cleanupPromises.push(videoStorage.deleteFile(newVideoUpload.publicId));
-    }
-    if (newThumbnailUpload) {
-      const thumbnailStorage = createStorage(storageConfig.thumbnailStorage);
-      cleanupPromises.push(thumbnailStorage.deleteFile(newThumbnailUpload.publicId));
-    }
-
-    if (cleanupPromises.length > 0) {
-      await Promise.allSettled(cleanupPromises).then(results => {
-        results.forEach(result => {
-          if (result.status === "rejected") {
-            console.error(
-              "Critical: Failed to clean up (delete) new file after an error during video update. Manual cleanup may be required.",
-              result.reason
-            );
-          }
-        });
-      });
-    }
-    throw error;
-  }
+  // Return immediate response with job tracking info
+  return {
+    videoId: (video._id as Types.ObjectId).toString(),
+    jobId: job.attrs._id.toString(),
+    title: video.title,
+    description: video.description,
+    uploadStatus: "updating",
+    message: "Video update has been queued for processing",
+  };
 };
 
-export const deleteVideo = async (videoId: string): Promise<void> => {
-  const video = await Video.findByIdAndDelete(videoId);
-
+export const deleteVideo = async (videoId: string) => {
+  // Check if video exists
+  const video = await Video.findById(videoId);
   if (!video) {
     throwError(HttpStatusCode.NOT_FOUND, "Video not found");
     return;
   }
 
-  const deletionPromises: Promise<void>[] = [];
-  const { videoFile, thumbnail } = video;
-
-  if (videoFile?.publicId) {
-    const videoStorage = createStorage(storageConfig.videoStorage);
-    deletionPromises.push(videoStorage.deleteFile(videoFile.publicId));
+  // Check if already soft deleted
+  if (video.isDeleted) {
+    throwError(HttpStatusCode.BAD_REQUEST, "Video is already marked for deletion");
+    return;
   }
 
-  if (thumbnail?.publicId) {
-    const thumbnailStorage = createStorage(storageConfig.thumbnailStorage);
-    deletionPromises.push(thumbnailStorage.deleteFile(thumbnail.publicId));
+  // Schedule soft delete job (immediate)
+  const softDeleteJobData: SoftDeleteVideoJobData = {
+    videoId,
+  };
+
+  const softDeleteJob = await agenda.schedule(
+    "now",
+    JOB_TYPES.SOFT_DELETE_VIDEO,
+    softDeleteJobData
+  );
+
+  console.log(`Video soft delete job scheduled with ID: ${softDeleteJob.attrs._id}`);
+
+  // Return immediate response with job tracking info
+  return {
+    videoId: (video._id as Types.ObjectId).toString(),
+    jobId: softDeleteJob.attrs._id.toString(),
+    title: video.title,
+    uploadStatus: "deleting",
+    message: "Video deletion has been queued for processing",
+  };
+};
+
+export const recoverVideo = async (videoId: string) => {
+  // Check if video exists
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throwError(HttpStatusCode.NOT_FOUND, "Video not found");
+    return;
   }
 
-  if (deletionPromises.length > 0) {
-    const results = await Promise.allSettled(deletionPromises);
-    results.forEach((result, index) => {
-      if (result.status === "rejected") {
-        const failedPublicId = index === 0 ? videoFile.publicId : thumbnail.publicId;
-        console.error(
-          `Failed to delete file with publicId '${failedPublicId}' from storage:`,
-          result.reason
-        );
-      }
-    });
+  // Check if video is soft deleted
+  if (!video.isDeleted) {
+    throwError(HttpStatusCode.BAD_REQUEST, "Video is not marked for deletion");
+    return;
   }
+
+  // Check if 7-day window has expired
+  if (video.deletedAt) {
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    const now = new Date();
+    const deletedTime = new Date(video.deletedAt);
+    const timeDiff = now.getTime() - deletedTime.getTime();
+
+    if (timeDiff > sevenDaysMs) {
+      throwError(
+        HttpStatusCode.BAD_REQUEST,
+        "Recovery window has expired. Video has been permanently deleted."
+      );
+      return;
+    }
+  }
+
+  // Schedule recovery job
+  const recoverJobData: RecoverVideoJobData = {
+    videoId,
+  };
+
+  const recoverJob = await agenda.schedule("now", JOB_TYPES.RECOVER_VIDEO, recoverJobData);
+
+  console.log(`Video recovery job scheduled with ID: ${recoverJob.attrs._id}`);
+
+  // Return immediate response with job tracking info
+  return {
+    videoId: (video._id as Types.ObjectId).toString(),
+    jobId: recoverJob.attrs._id.toString(),
+    title: video.title,
+    uploadStatus: "recovering",
+    message: "Video recovery has been queued for processing",
+  };
 };
 
 export const togglePublishStatus = async (videoId: string) => {
@@ -287,14 +280,62 @@ export const togglePublishStatus = async (videoId: string) => {
   return video;
 };
 
+export const cancelSoftDelete = async (videoId: string) => {
+  // Check if video exists
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throwError(HttpStatusCode.NOT_FOUND, "Video not found");
+    return;
+  }
+
+  // Check if video is already soft deleted
+  if (video.isDeleted) {
+    throwError(HttpStatusCode.BAD_REQUEST, "Video is already soft deleted. Use recover endpoint instead.");
+    return;
+  }
+
+  // Find and cancel any scheduled soft delete jobs for this video
+  try {
+    const jobs = await agenda.jobs({
+      name: JOB_TYPES.SOFT_DELETE_VIDEO,
+      "data.videoId": videoId
+    });
+
+    if (jobs.length === 0) {
+      throwError(HttpStatusCode.BAD_REQUEST, "No scheduled soft delete job found for this video");
+      return;
+    }
+
+    // Cancel all matching jobs
+    const cancelPromises = jobs.map(job => agenda.cancel({ _id: job.attrs._id }));
+    await Promise.all(cancelPromises);
+
+    console.log(`Cancelled ${jobs.length} soft delete job(s) for video ${videoId}`);
+
+    // Return immediate response
+    return {
+      videoId: (video._id as Types.ObjectId).toString(),
+      title: video.title,
+      description: video.description,
+      uploadStatus: video.uploadStatus,
+      message: "Soft delete cancelled successfully",
+    };
+  } catch (error) {
+    console.error(`Failed to cancel soft delete for video ${videoId}:`, error);
+    throwError(HttpStatusCode.INTERNAL_SERVER_ERROR, "Failed to cancel soft delete");
+  }
+};
+
 export const videoService = {
   getAllVideos,
   publishVideo,
   getVideoById,
+  getVideoStatus,
   updateVideo,
   deleteVideo,
+  recoverVideo,
   togglePublishStatus,
-  getVideoDuration,
+  cancelSoftDelete,
 };
 
 export default videoService;

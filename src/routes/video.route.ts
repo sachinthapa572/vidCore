@@ -8,6 +8,7 @@ import { zCustomValidator } from "@/utils/zod-validator.utils";
 import videoValidationSchema, {
   getAllVideosQuerySchema,
   idParamSchema,
+  UpdateVideoValidationSchema,
 } from "@/validation/video.validation";
 
 const videoRouter = new Hono();
@@ -24,40 +25,51 @@ videoRouter
       sortType,
       userId,
     });
-    sendSuccessResponse(c, videos, "Videos retrieved successfully");
+    return sendSuccessResponse(c, videos, "Videos retrieved successfully");
   })
   .post("/", zCustomValidator("form", videoValidationSchema), async c => {
     const data = c.req.valid("form");
+    const { _id } = c.get("user");
+    const newVideo = await videoService.publishVideo({ ...data, owner: _id });
+    console.log("to send the response the data has never come here ");
 
-    const newVideo = await videoService.publishVideo(data);
-
-    sendSuccessResponse(c, newVideo, "Video published successfully", HttpStatusCode.CREATED);
+    return sendSuccessResponse(c, newVideo, "Video published successfully", HttpStatusCode.OK);
   })
   .get("/:id", zCustomValidator("param", idParamSchema), async c => {
     const videoId = c.req.param("id");
     const video = await videoService.getVideoById(videoId);
-    sendSuccessResponse(c, video, "Video retrieved successfully");
+    return sendSuccessResponse(c, video, "Video retrieved successfully");
+  })
+  .get("/status/:id", zCustomValidator("param", idParamSchema), async c => {
+    const videoId = c.req.param("id");
+    const status = await videoService.getVideoStatus(videoId);
+    return sendSuccessResponse(c, status, "Video status retrieved successfully");
   })
   .patch(
     "/:id",
-    zCustomValidator("form", videoValidationSchema),
+    zCustomValidator("form", UpdateVideoValidationSchema),
     zCustomValidator("param", idParamSchema),
     async c => {
       const videoId = c.req.param("id");
       const data = c.req.valid("form");
       const updatedVideo = await videoService.updateVideo({ videoId, ...data });
-      sendSuccessResponse(c, updatedVideo, "Video updated successfully");
+      return sendSuccessResponse(c, updatedVideo, "Video updated successfully");
     }
   )
   .delete("/:id", zCustomValidator("param", idParamSchema), async c => {
     const videoId = c.req.param("id");
     await videoService.deleteVideo(videoId);
-    sendSuccessResponse(c, null, "Video deleted successfully");
+    return sendSuccessResponse(c, null, "Video deleted successfully");
   })
-  .patch("/toggle/publish/:videoId", zCustomValidator("param", idParamSchema), async c => {
-    const videoId = c.req.param("videoId");
+  .patch("/toggle/publish/:id", zCustomValidator("param", idParamSchema), async c => {
+    const videoId = c.req.param("id");
     const video = await videoService.togglePublishStatus(videoId);
-    sendSuccessResponse(c, video, "Video publish status toggled successfully");
+    return sendSuccessResponse(c, video, "Video publish status toggled successfully");
+  })
+  .patch("/cancel-delete/:id", zCustomValidator("param", idParamSchema), async c => {
+    const videoId = c.req.param("id");
+    const result = await videoService.cancelSoftDelete(videoId);
+    return sendSuccessResponse(c, result, "Soft delete cancelled successfully");
   });
 
 export default videoRouter;

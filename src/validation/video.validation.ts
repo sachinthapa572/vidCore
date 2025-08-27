@@ -26,11 +26,12 @@ const videoValidationSchema = z.object({
       message: "Description must be no more than 5000 characters long",
     }),
 
-  owner: requiredError("Owner ID")
-    .refine(val => Types.ObjectId.isValid(val), {
-      message: "Invalid Owner ID format",
-    })
-    .transform(val => new Types.ObjectId(val)),
+  //   owner: requiredError("Owner ID")
+  //     .refine(val => Types.ObjectId.isValid(val), {
+  //       message: "Invalid Owner ID format",
+  //     })
+  //     .transform(val => new Types.ObjectId(val))
+  //     .optional(),
 
   videoFile: fileError("Video file")
     .max(100 * 1024 * 1024, { message: "Video file must be less than 100MB" })
@@ -54,6 +55,15 @@ const videoValidationSchema = z.object({
     }),
 });
 
+export const UpdateVideoValidationSchema = videoValidationSchema.partial().check(ctx => {
+  if (!ctx.value.description && !ctx.value.thumbnail && !ctx.value.videoFile) {
+    ctx.issues.push({
+      code: "custom",
+      message: "At least one field must be updated",
+      input: ctx.value,
+    });
+  }
+});
 const sortByEnum = ["createdAt", "updatedAt"] as const;
 const sortTypeEnum = ["asc", "desc"] as const;
 
