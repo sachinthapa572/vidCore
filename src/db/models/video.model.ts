@@ -4,7 +4,11 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 import type { ObjectId, WithDoc } from "@/types/type";
 
-export type VideoUploadStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type VideoUploadStatus = "pending" | "processing" | "completed" | "failed";
+
+type VideoMethods = {
+  isOwnedBy(userId: ObjectId): boolean;
+};
 
 export type IVideo = WithDoc<{
   videoFile: {
@@ -32,9 +36,9 @@ export type IVideo = WithDoc<{
   updatedAt: Date;
 }>;
 
-export type VideoModel = Model<IVideo>;
+export type VideoModel = Model<IVideo, Record<string, unknown>, VideoMethods>;
 
-const videoSchema = new Schema<IVideo, VideoModel>(
+const videoSchema = new Schema<IVideo, VideoModel, VideoMethods>(
   {
     videoFile: {
       url: {
@@ -83,8 +87,8 @@ const videoSchema = new Schema<IVideo, VideoModel>(
     },
     uploadStatus: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'failed'],
-      default: 'pending',
+      enum: ["pending", "processing", "completed", "failed"],
+      default: "pending",
       required: true,
     },
     jobId: {
@@ -120,5 +124,10 @@ const videoSchema = new Schema<IVideo, VideoModel>(
 );
 
 videoSchema.plugin(mongooseAggregatePaginate);
+
+// Instance method to check if video is owned by a user
+videoSchema.methods.isOwnedBy = function (userId: ObjectId): boolean {
+  return this.owner?.equals(userId) ?? false;
+};
 
 export const Video = mongoose.model<IVideo, VideoModel>("Video", videoSchema);

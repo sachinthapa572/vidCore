@@ -1,18 +1,23 @@
-import type mongoose from "mongoose";
-import { model, Schema } from "mongoose";
+import { type Model, model, Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 import type { ObjectId, WithDoc } from "@/types/type";
+
+type Methods = {
+  isOwnedBy(userId: ObjectId): boolean;
+};
 
 export type IPlaylist = WithDoc<{
   name: string;
   description: string;
   videos: ObjectId[];
   owner: ObjectId;
-}>;
+}> &
+  Methods;
 
-export type PlaylistModel = mongoose.Model<IPlaylist>;
+export type PlaylistModel = Model<IPlaylist>;
 
-const playlistSchema = new Schema<IPlaylist, PlaylistModel>(
+const playlistSchema = new Schema<IPlaylist, PlaylistModel, Methods>(
   {
     name: {
       type: String,
@@ -39,4 +44,11 @@ const playlistSchema = new Schema<IPlaylist, PlaylistModel>(
   { timestamps: true }
 );
 
-export const Playlist = model<IPlaylist, PlaylistModel>("Playlist", playlistSchema);
+// Instance method to check if playlist is owned by a user
+playlistSchema.methods.isOwnedBy = function (userId: ObjectId): boolean {
+  return this.owner.equals(userId);
+};
+
+playlistSchema.plugin(mongooseAggregatePaginate);
+
+export const Playlist = model<IPlaylist>("Playlist", playlistSchema);
