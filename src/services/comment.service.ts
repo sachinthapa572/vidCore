@@ -1,4 +1,4 @@
-import type { Types } from "mongoose";
+import type { PipelineStage, Types } from "mongoose";
 
 import { Comment } from "@/db/models/comment.model";
 import { HttpStatusCode } from "@/enum/http-status-codes.enum";
@@ -19,8 +19,7 @@ export const getVideoComments = async (data: GetVideoCommentsOptions) => {
   const { videoId, page = 1, limit = 10, sort = "recent", userId } = data;
 
   // Build match conditions
-  // biome-ignore lint/suspicious/noExplicitAny : any
-  const matchConditions: any = {
+  const matchConditions: Record<string, unknown> = {
     video: videoId,
     parent: null,
   };
@@ -31,8 +30,7 @@ export const getVideoComments = async (data: GetVideoCommentsOptions) => {
   }
 
   // Build aggregation pipeline
-  // biome-ignore lint/suspicious/noExplicitAny : any
-  const pipeline: any[] = [
+  const pipeline: PipelineStage[] = [
     { $match: matchConditions },
     {
       $lookup: {
@@ -110,7 +108,7 @@ export const getVideoComments = async (data: GetVideoCommentsOptions) => {
   ];
 
   // Add sorting based on the sort parameter
-  let sortStage: any = {};
+  let sortStage: PipelineStage.Sort = { $sort: { isPinned: -1, createdAt: -1 } };
   switch (sort) {
     case "recent":
       sortStage = { $sort: { isPinned: -1, createdAt: -1 } };
@@ -132,14 +130,13 @@ export const getVideoComments = async (data: GetVideoCommentsOptions) => {
   }
 
   pipeline.push(sortStage);
-  pipeline.push({ $skip: (page - 1) * limit });
-  pipeline.push({ $limit: limit });
+  pipeline.push({ $skip: (page - 1) * limit } as PipelineStage.Skip);
+  pipeline.push({ $limit: limit } as PipelineStage.Limit);
 
   const comments = await Comment.aggregate(pipeline);
 
   if (!comments?.length) {
     throwError(HttpStatusCode.NOT_FOUND, "Comments not found");
-    return;
   }
 
   return comments;
@@ -253,6 +250,7 @@ export const pinComment = async (
   }
 
   // Check if the user is the video owner (can pin comments)
+  // biome-ignore lint/suspicious/noExplicitAny: <>
   const video = comment.video as any;
   if (!video?.owner?.equals(userId)) {
     throwError(HttpStatusCode.FORBIDDEN, "Only video owner can pin/unpin comments");
