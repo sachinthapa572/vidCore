@@ -69,6 +69,11 @@ videoRouter
     const videoId = c.req.param("id");
     const result = await videoService.cancelSoftDelete(videoId);
     return sendSuccessResponse(c, result, "Soft delete cancelled successfully");
+  })
+  .post("/watch/:id", zCustomValidator("param", idParamSchema), async c => {
+    const videoId = c.req.param("id");
+    const video = await videoService.incrementVideoViews(videoId);
+    return sendSuccessResponse(c, video, "Video view incremented successfully");
   });
 
 export default videoRouter;

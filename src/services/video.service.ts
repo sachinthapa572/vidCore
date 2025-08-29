@@ -12,6 +12,7 @@ import { storageConfig } from "@/config/storage.config";
 import { Video } from "@/db/models/video.model";
 import { HttpStatusCode } from "@/enum/http-status-codes.enum";
 import { createStorage } from "@/services/storage/storage.factory";
+import { userService } from "@/services/user.service";
 import { throwError } from "@/utils/api-error";
 import type { SortByEnum, SortTypeEnum, videoValidationInput } from "@/validation/video.validation";
 
@@ -412,6 +413,12 @@ export const togglePublishStatus = async (videoId: string) => {
 
   video.isPublished = !video.isPublished;
   await video.save();
+
+  // Update owner's tweet eligibility after publish status change
+  if (video.owner) {
+    await userService.updateUserTweetEligibility(video.owner);
+  }
+
   return video;
 };
 
@@ -464,6 +471,26 @@ export const cancelSoftDelete = async (videoId: string) => {
   }
 };
 
+export const incrementVideoViews = async (videoId: string) => {
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    { $inc: { views: 1 } },
+    { new: true }
+  );
+
+  if (!video) {
+    throwError(HttpStatusCode.NOT_FOUND, "Video not found");
+    return;
+  }
+
+  // Update owner's tweet eligibility after view increment
+  if (video.owner) {
+    await userService.updateUserTweetEligibility(video.owner);
+  }
+
+  return video;
+};
+
 export const videoService = {
   getAllVideos,
   publishVideo,
@@ -474,6 +501,7 @@ export const videoService = {
   recoverVideo,
   togglePublishStatus,
   cancelSoftDelete,
+  incrementVideoViews,
 };
 
 export default videoService;

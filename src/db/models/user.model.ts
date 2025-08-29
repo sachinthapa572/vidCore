@@ -23,6 +23,9 @@ export type IUser = {
   watchHistory: Types.ObjectId[];
   password: string;
   refreshToken: string;
+  canTweet: boolean;
+  totalViews: number;
+  totalSubscribers: number;
 };
 
 export const userSchema = new Schema<IUser, Model<IUser>, Methods>(
@@ -86,6 +89,18 @@ export const userSchema = new Schema<IUser, Model<IUser>, Methods>(
     refreshToken: {
       type: String,
     },
+    canTweet: {
+      type: Boolean,
+      default: false,
+    },
+    totalViews: {
+      type: Number,
+      default: 0,
+    },
+    totalSubscribers: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -117,6 +132,10 @@ userSchema.statics.checkValidUser = async function (id: Types.ObjectId) {
   }
   return user;
 };
+
+userSchema.virtual("avatarUrl").get(function () {
+  return this.avatar?.url;
+});
 
 // ✅ Export the model
 export const User = model("User", userSchema);

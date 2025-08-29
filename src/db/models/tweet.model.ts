@@ -1,16 +1,22 @@
-import type { Model } from "mongoose";
-import mongoose, { Schema } from "mongoose";
+import { type Model, model, Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 import type { ObjectId, WithDoc } from "@/types/type";
+
+type Methods = {
+  isOwnedBy(userId: ObjectId): boolean;
+};
 
 export type ITweet = WithDoc<{
   content: string;
   owner: ObjectId;
-}>;
+  isPinned: boolean;
+}> &
+  Methods;
 
 export type TweetModel = Model<ITweet>;
 
-const tweetSchema = new Schema<ITweet, TweetModel>(
+const tweetSchema = new Schema<ITweet, TweetModel, Methods>(
   {
     content: {
       type: String,
@@ -22,8 +28,20 @@ const tweetSchema = new Schema<ITweet, TweetModel>(
       ref: "User",
       required: [true, "Owner is required"],
     },
+    isPinned: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
-export const Tweet = mongoose.model<ITweet, TweetModel>("Tweet", tweetSchema);
+// Instance method to check if tweet is owned by a user
+tweetSchema.methods.isOwnedBy = function (userId: ObjectId): boolean {
+  return this.owner.equals(userId);
+};
+
+// Add aggregation plugin for advanced queries with hints
+tweetSchema.plugin(mongooseAggregatePaginate);
+
+export const Tweet = model<ITweet>("Tweet", tweetSchema);
