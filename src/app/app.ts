@@ -7,8 +7,13 @@ import "@/services/agenda/processors"; // Register job processors
 
 import agendaDashboardUIRouter from "@/routes/agenda-dashboard-ui.route";
 import agendaDashboardRouter from "@/routes/agenda-dashboard.route";
+import commentRouter from "@/routes/comment.route";
+import dashboardRouter from "@/routes/dashboard.route";
 import healthRouter from "@/routes/health.route";
 import likeRouter from "@/routes/like.route";
+import playlistRouter from "@/routes/playlist.route";
+import subscriptionRouter from "@/routes/subscription.route";
+import tweetRouter from "@/routes/tweet.route";
 import videoRouter from "@/routes/video.route";
 
 import dbConnect from "../db/database.config";
@@ -57,7 +62,12 @@ app.get(
 app.route("/", healthRouter);
 app.route("/users/", userRouter);
 app.route("/videos/", videoRouter);
+app.route("/comments/", commentRouter);
+app.route("/tweets/", tweetRouter);
+app.route("/subscriptions/", subscriptionRouter);
+app.route("/playlists/", playlistRouter);
 app.route("/likes/", likeRouter);
+app.route("/dashboard/", dashboardRouter);
 app.route("/agenda/", agendaDashboardRouter);
 app.route("/agenda/", agendaDashboardUIRouter);
 
