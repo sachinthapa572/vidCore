@@ -11,6 +11,8 @@ export type IComment = WithDoc<{
   content: string;
   video: ObjectId;
   owner: ObjectId;
+  parent?: ObjectId; // For subcomments/replies
+  isPinned?: boolean; // For pinning comments
 }> &
   Methods;
 
@@ -33,11 +35,22 @@ const commentSchema = new Schema<IComment, commmentModel, Methods>(
       ref: "User",
       required: [true, "Owner is required"],
     },
+    parent: {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null,
+    },
+    isPinned: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+commentSchema.index({ video: 1, owner: 1 }, { unique: true });
 
 commentSchema.methods.isOwnedBy = function (userId: ObjectId): boolean {
   return this.owner.equals(userId);
